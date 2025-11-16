@@ -1,0 +1,114 @@
+\section{Experimental Setup}
+\label{sec:setup}
+
+\subsection{Dataset and Model}
+
+\textbf{Dataset:} CIFAR-10~\cite{krizhevsky2009learning}
+\begin{itemize}
+    \item 50k training images, 10k test images
+    \item 32$\times$32 RGB images, 10 classes
+    \item Standard augmentation: random crop (padding=4), horizontal flip
+    \item Normalization: per-channel mean/std
+\end{itemize}
+
+\textbf{Model:} VGG11~\cite{simonyan2014very} with BatchNorm
+\begin{itemize}
+    \item 8 convolutional layers (64$\rightarrow$512 channels)
+    \item 3 fully connected layers (512$\rightarrow$4096$\rightarrow$4096$\rightarrow$10)
+    \item Batch normalization after each conv layer
+    \item ReLU activation, MaxPool after certain layers
+    \item Total parameters: 9.23M
+\end{itemize}
+
+\subsection{Training Configuration}
+
+\textbf{Common Settings:}
+\begin{itemize}
+    \item Batch size: 512
+    \item Base learning rate: 0.01
+    \item Weight decay: 0.05
+    \item LR schedule: Cosine annealing to 0
+    \item Hardware: NVIDIA RTX 6000 24GB
+    \item Framework: PyTorch 2.0+
+    \item Random seed: 42 (fixed for reproducibility)
+\end{itemize}
+
+\subsection{Optimizer-Specific Hyperparameters}
+
+\textbf{AdamW:}
+\begin{itemize}
+    \item $\beta_1 = 0.9$, $\beta_2 = 0.999$
+    \item $\epsilon = 10^{-8}$
+    \item Decoupled weight decay: 0.05
+\end{itemize}
+
+\textbf{Muon:}
+\begin{itemize}
+    \item Base LR: 0.01
+    \item LR multiplier for 2D params: 1.25
+    \item Weight decay: 0.05
+    \item SVD backend: PyTorch \texttt{torch.linalg.svd}
+\end{itemize}
+
+\textbf{FALCON:}
+\begin{itemize}
+    \item falcon\_every: 4 $\rightarrow$ 1 (interleaved schedule)
+    \item retain\_energy: 0.95 $\rightarrow$ 0.50
+    \item ema\_decay: 0.999
+    \item share\_masks\_by\_shape: True
+    \item apply\_stages: ``3,4'' (later VGG stages)
+    \item mask\_interval: 15 epochs
+    \item skip\_mix\_end: 0.85
+    \item freq\_wd\_beta: 0.05
+    \item rank1\_backend: ``poweriter''
+    \item poweriter\_steps: 20
+\end{itemize}
+
+\subsection{Experiment Scenarios}
+
+We evaluate all three optimizers across multiple scenarios:
+
+\textbf{A. Full Training (60 epochs, 100\% data):}
+\begin{itemize}
+    \item Measure final accuracy and convergence speed
+    \item Track per-epoch time and throughput (images/sec)
+    \item Analyze training curves and optimizer dynamics
+\end{itemize}
+
+\textbf{B. Fixed-Time Budget (10 minutes):}
+\begin{itemize}
+    \item Run each optimizer for exactly 10 minutes
+    \item Compare achieved accuracy within time limit
+    \item Tests efficiency under practical constraints
+\end{itemize}
+
+\textbf{C. Data Efficiency (Limited Training Data):}
+\begin{itemize}
+    \item \textbf{20\% data:} 10k images, 60 epochs
+    \item \textbf{10\% data:} 5k images, 100 epochs
+    \item Hypothesis: Frequency filtering provides implicit regularization
+    \item Test optimizer robustness to sample size
+\end{itemize}
+
+\subsection{Evaluation Metrics}
+
+\begin{itemize}
+    \item \textbf{Top-1 Accuracy:} Primary metric on test set
+    \item \textbf{Training Loss:} Track optimization progress
+    \item \textbf{Convergence Speed:} Time to reach 85\% accuracy
+    \item \textbf{Per-Epoch Time:} Computational efficiency
+    \item \textbf{Throughput:} Images processed per second
+    \item \textbf{Memory Usage:} Peak GPU memory consumption
+\end{itemize}
+
+\subsection{Statistical Methodology}
+
+Due to computational constraints, we report single-run results with the following considerations:
+\begin{itemize}
+    \item Fixed random seed (42) for reproducibility
+    \item Typical CIFAR-10 variance: $\pm$0.2\%
+    \item Differences $>$0.3\% considered potentially significant
+    \item Consistent patterns across scenarios strengthen conclusions
+\end{itemize}
+
+Future work should include multi-seed runs for statistical significance testing.

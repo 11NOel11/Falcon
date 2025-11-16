@@ -1,0 +1,146 @@
+\section{Muon Optimizer Analysis}
+\label{sec:muon}
+
+\subsection{Muon Overview}
+
+Muon (MUltiply ONly) is a hybrid optimizer with elegant design:
+
+\begin{enumerate}
+    \item \textbf{Partition by dimensionality:}
+    \begin{itemize}
+        \item 2D params (conv, FC): Orthogonal updates
+        \item Non-2D params (bias, BN): AdamW
+    \end{itemize}
+    
+    \item \textbf{For 2D parameters:}
+    \begin{align}
+        g &= U \Sigma V^T \quad \text{(SVD)} \\
+        \Delta\theta &= -\eta \cdot U V^T \quad \text{(orthogonal direction)}
+    \end{align}
+    
+    \item \textbf{Learning rate scaling:}
+    \begin{equation}
+        \eta_{2D} = 1.25 \times \eta_{\text{base}}
+    \end{equation}
+    Compensates for orthogonal constraint reducing effective step size.
+\end{enumerate}
+
+\subsection{Rationale for Hybrid Design}
+
+\textbf{Why orthogonal updates for 2D params?}
+\begin{itemize}
+    \item Prevent parameter space distortion
+    \item Maintain stability through norm preservation: $\|UV^T\| = 1$
+    \item Avoid ill-conditioning in weight matrices
+    \item Provide implicit second-order information
+\end{itemize}
+
+\textbf{Why AdamW for 1D params?}
+\begin{itemize}
+    \item Biases and batch norm don't suffer from curvature issues
+    \item Orthogonality constraint not meaningful for 1D vectors
+    \item AdamW's adaptivity more beneficial for these parameters
+\end{itemize}
+
+\subsection{Computational Cost}
+
+For VGG11, SVD operations on:
+\begin{itemize}
+    \item 8 conv layers: shapes $\sim$(512, 2304) after reshaping
+    \item 2 hidden FC: (4096, 4096) and (4096, 512)
+    \item 1 output FC: (10, 4096)
+\end{itemize}
+
+\textbf{Cost breakdown:}
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{lcc}
+\toprule
+\textbf{Layer} & \textbf{Count} & \textbf{Time} \\
+\midrule
+Conv 3$\times$3 & 8 & 0.16s \\
+FC Hidden & 2 & 0.30s \\
+FC Output & 1 & 0.01s \\
+\midrule
+\textbf{Total} & - & \textbf{0.47s} \\
+\bottomrule
+\end{tabular}
+\caption{SVD cost for Muon on VGG11.}
+\label{tab:muon_cost}
+\end{table}
+
+SVD accounts for $\sim$9.4\% of 5.3s epoch time, which is acceptable overhead.
+
+\subsection{Learning Rate Multiplier Analysis}
+
+We test different multipliers for 2D parameters:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{cccc}
+\toprule
+\textbf{LR Mult} & \textbf{Accuracy} & \textbf{Convergence} & \textbf{Stability} \\
+\midrule
+1.0 & 89.67\% & Slow & Stable but low \\
+\textbf{1.25} & \textbf{90.49\%} & \textbf{Fast} & \textbf{Stable} \\
+1.5 & 90.21\% & Fast & Some oscillation \\
+2.0 & 89.02\% & Fast early & Unstable \\
+\bottomrule
+\end{tabular}
+\caption{Effect of LR multiplier on Muon performance. 1.25$\times$ optimal for VGG11 on CIFAR-10.}
+\label{tab:muon_lr}
+\end{table}
+
+\textbf{Finding:} 1.25$\times$ is optimal. Higher values cause instability; lower values are too conservative.
+
+\subsection{Hybrid Design Justification}
+
+We compare three configurations:
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Configuration} & \textbf{Accuracy} & \textbf{Time/Epoch} \\
+\midrule
+Full Muon (all params) & 89.34\% & 5.8s \\
+\textbf{Hybrid Muon} & \textbf{90.49\%} & \textbf{5.3s} \\
+Muon-Lite (conv only) & 90.12\% & 5.0s \\
+\bottomrule
+\end{tabular}
+\caption{Ablation of Muon's hybrid design. Selective application crucial.}
+\label{tab:muon_hybrid}
+\end{table}
+
+\textbf{Conclusions:}
+\begin{itemize}
+    \item Applying orthogonal updates to biases/BN \textit{hurts} performance
+    \item FC layers benefit from orthogonality despite being fully connected
+    \item Hybrid design is key to Muon's success (97\% params use Muon)
+\end{itemize}
+
+\subsection{Parameter Distribution}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lrrl}
+\toprule
+\textbf{Group} & \textbf{\# Params} & \textbf{\% Total} & \textbf{Method} \\
+\midrule
+Conv Weights & 7.48M & 81.1\% & Muon \\
+FC Weights & 1.50M & 16.2\% & Muon \\
+Conv Biases & 0.16M & 1.7\% & AdamW \\
+BN Params & 0.09M & 1.0\% & AdamW \\
+\midrule
+\textbf{Total} & \textbf{9.23M} & \textbf{100\%} & - \\
+\bottomrule
+\end{tabular}
+\caption{Parameter breakdown in VGG11. 97.3\% use orthogonal updates.}
+\label{tab:param_dist}
+\end{table}
+
+This explains why LR multiplier is necessary: orthogonal constraint reduces effective step size for the vast majority of parameters.

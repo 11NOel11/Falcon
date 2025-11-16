@@ -1,0 +1,137 @@
+\section{FALCON Method}
+\label{sec:falcon}
+
+\subsection{Overview}
+
+FALCON processes gradients through a six-stage pipeline:
+\begin{enumerate}
+    \item Partition parameters by dimension (2D vs non-2D)
+    \item For 2D params: Apply frequency filtering $\rightarrow$ Muon update
+    \item For non-2D params: Standard AdamW update
+    \item Update EMA weights for stable evaluation
+    \item Apply frequency-weighted weight decay
+    \item Blend orthogonal and adaptive updates
+\end{enumerate}
+
+\subsection{Frequency-Domain Gradient Filtering}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.48\textwidth]{figures/fig_real_image_filtering.png}
+\caption{Frequency filtering demonstrated on real CIFAR-10 images. Left to right: original, FFT magnitude (log), filtering at 95\%/75\%/50\% retention, removed components. At 95\% (early training), only noise removed; at 50\% (late), significant smoothing occurs.}
+\label{fig:real_filtering}
+\end{figure}
+
+Given gradient $g_t \in \mathbb{R}^{C_{out} \times C_{in} \times H \times W}$ for a convolutional layer:
+
+\textbf{Step 1: Forward FFT}
+\begin{equation}
+G_t = \text{FFT2D}(g_t) \in \mathbb{C}^{C_{out} \times C_{in} \times H \times W}
+\end{equation}
+
+\textbf{Step 2: Center Low Frequencies}
+\begin{equation}
+G_t^{\text{shifted}} = \text{FFTSHIFT}(G_t)
+\end{equation}
+
+\textbf{Step 3: Compute Energy Spectrum}
+\begin{equation}
+E(u, v) = |G_t^{\text{shifted}}(u, v)|^2
+\end{equation}
+
+\textbf{Step 4: Adaptive Mask Generation}
+
+For each layer $l$, maintain EMA of target energy:
+\begin{equation}
+\tau_l^{(t)} = \tau_l^{(t-1)} + \alpha \cdot (\tau_{\text{global}}^{(t)} - \tau_l^{(t-1)})
+\end{equation}
+where $\alpha = 0.1$ and $\tau_{\text{global}}^{(t)}$ follows schedule:
+\begin{equation}
+\tau_{\text{global}}^{(t)} = \tau_{\text{start}} - (\tau_{\text{start}} - \tau_{\text{end}}) \cdot \frac{t}{T}
+\end{equation}
+with $\tau_{\text{start}} = 0.95$, $\tau_{\text{end}} = 0.50$, $T = 60$ epochs.
+
+Generate binary mask $M_t$ retaining $\tau_l^{(t)}$ of total energy:
+\begin{equation}
+M_t(u, v) = \begin{cases}
+1 & \text{if } (u, v) \in \text{top-}\tau_l^{(t)} \text{ energy bins} \\
+0 & \text{otherwise}
+\end{cases}
+\end{equation}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.48\textwidth]{figures/fig_frequency_masks.png}
+\caption{Frequency masks at retention levels 95\%, 85\%, 75\%, 50\%. Red: kept frequencies, black: filtered. As retention decreases, only central low-frequency components remain.}
+\label{fig:freq_masks}
+\end{figure}
+
+\textbf{Step 5: Mask Sharing by Shape}
+
+Layers with identical spatial size $(H, W)$ share masks:
+\begin{equation}
+M_t^{(H \times W)} = M_t \text{ for all layers with shape } (*, *, H, W)
+\end{equation}
+This amortizes FFT computation across layer groups.
+
+\textbf{Step 6: Apply Mask \& Rank-k Approximation}
+\begin{align}
+\hat{G}_t &= M_t \odot G_t^{\text{shifted}} \\
+\hat{G}_t^{\text{lowrank}} &= \text{RANK\_K\_APPROX}(\hat{G}_t)
+\end{align}
+
+\textbf{Step 7: Inverse FFT}
+\begin{equation}
+\hat{g}_t = \text{REAL}(\text{IFFT2D}(\text{IFFTSHIFT}(\hat{G}_t^{\text{lowrank}})))
+\end{equation}
+
+\subsection{Hybrid Optimization}
+
+\textbf{For 2D Parameters (after filtering):}
+\begin{align}
+&\text{Apply Muon orthogonal update:} \nonumber \\
+&U, \Sigma, V = \text{SVD}(\hat{g}_t) \\
+&\Delta\theta_t^{\text{ortho}} = -\eta \cdot U V^T \\
+&\text{Blend with AdamW:} \nonumber \\
+&\Delta\theta_t = (1 - \beta_{\text{skip}}) \cdot \Delta\theta_t^{\text{ortho}} + \beta_{\text{skip}} \cdot \Delta\theta_t^{\text{adam}}
+\end{align}
+where $\beta_{\text{skip}}$ increases from 0 $\rightarrow$ 0.85 over training.
+
+\textbf{For Non-2D Parameters (no filtering):}
+\begin{align}
+&\text{Standard AdamW:} \nonumber \\
+&m_t = \beta_1 m_{t-1} + (1 - \beta_1) g_t \\
+&\theta_t = \theta_{t-1} - \eta \frac{m_t}{\sqrt{v_t + \epsilon}} - \lambda \theta_{t-1}
+\end{align}
+
+\subsection{EMA Weight Averaging}
+\begin{equation}
+\theta_{\text{ema}}^{(t)} = \gamma \theta_{\text{ema}}^{(t-1)} + (1 - \gamma) \theta^{(t)}
+\end{equation}
+where $\gamma = 0.999$. Used for evaluation only.
+
+\subsection{Frequency-Weighted Weight Decay}
+
+For high-frequency components (beyond $\tau_l^{(t)}$ threshold):
+\begin{equation}
+\theta_t = \theta_t - \beta_{\text{freq}} \cdot \eta \cdot \theta_t
+\end{equation}
+where $\beta_{\text{freq}} = 0.05$.
+
+\subsection{Interleaved Filtering Schedule}
+
+Instead of filtering every epoch:
+\begin{equation}
+\text{falcon\_every}(t) = \lfloor \text{start} - (\text{start} - \text{end}) \cdot \frac{t}{T} \rfloor
+\end{equation}
+with start=4, end=1. Early: filter every 4 epochs (exploration); late: every epoch (smoothness). Provides $\sim$20\% speedup.
+
+\subsection{Implementation Details}
+
+\begin{itemize}
+    \item \textbf{FFT Backend:} PyTorch \texttt{torch.fft.rfft2}
+    \item \textbf{Rank-k Method:} Power iteration with 20 steps
+    \item \textbf{Mask Interval:} Recompute every 15 epochs
+    \item \textbf{Apply Stages:} Filter only later VGG stages (3-4)
+    \item \textbf{Complexity:} O($HW \log(HW)$) per layer
+\end{itemize}
