@@ -18,34 +18,37 @@ interface ExperimentData {
 export default function Results() {
   const [selectedCategory, setSelectedCategory] = useState<'full_training' | 'fixed_time' | 'data_efficiency'>('full_training');
 
+  // Base path for GitHub Pages deployment
+  const basePath = process.env.NODE_ENV === 'production' ? '/Falcon' : '';
+
   const figureCategories = [
     {
       title: 'Core Optimization Results',
       figures: [
-        { src: '/fig_top1_vs_time.png', caption: 'Top-1 Accuracy vs Training Time', description: 'Comparison of convergence speed across optimizers' },
-        { src: '/fig_time_to_85.png', caption: 'Time to 85% Accuracy', description: 'How quickly each optimizer reaches key accuracy milestones' },
-        { src: '/fig_data_efficiency.png', caption: 'Data Efficiency Comparison', description: 'Performance with reduced training data (10%, 20%, 100%)' },
-        { src: '/fig_fixed_time_10min.png', caption: 'Fixed Time Budget (10 min)', description: 'Best accuracy achievable within a fixed time constraint' },
+        { src: `${basePath}/fig_top1_vs_time.png`, caption: 'Top-1 Accuracy vs Training Time', description: 'Comparison of convergence speed across optimizers' },
+        { src: `${basePath}/fig_time_to_85.png`, caption: 'Time to 85% Accuracy', description: 'How quickly each optimizer reaches key accuracy milestones' },
+        { src: `${basePath}/fig_data_efficiency.png`, caption: 'Data Efficiency Comparison', description: 'Performance with reduced training data (10%, 20%, 100%)' },
+        { src: `${basePath}/fig_fixed_time_10min.png`, caption: 'Fixed Time Budget (10 min)', description: 'Best accuracy achievable within a fixed time constraint' },
       ],
     },
     {
       title: 'Frequency Filtering & Adaptive Schedules',
       figures: [
-        { src: '/fig_frequency_filtering_demo.png', caption: 'Frequency Filtering Demonstration', description: 'How FFT-based filtering removes high-frequency noise' },
-        { src: '/fig_frequency_masks.png', caption: 'Frequency Domain Masks', description: 'Energy-based masking in the frequency domain' },
-        { src: '/fig_real_image_filtering.png', caption: 'Real Image Filtering Example', description: 'Visual demonstration of frequency filtering on actual images' },
-        { src: '/fig_progressive_filtering.png', caption: 'Progressive Filtering Schedule', description: 'How retain fraction decreases over training epochs' },
-        { src: '/fig_adaptive_schedules.png', caption: 'Adaptive Scheduling Dynamics', description: 'Evolution of retain fraction and interleaving period' },
+        { src: `${basePath}/fig_frequency_filtering_demo.png`, caption: 'Frequency Filtering Demonstration', description: 'How FFT-based filtering removes high-frequency noise' },
+        { src: `${basePath}/fig_frequency_masks.png`, caption: 'Frequency Domain Masks', description: 'Energy-based masking in the frequency domain' },
+        { src: `${basePath}/fig_real_image_filtering.png`, caption: 'Real Image Filtering Example', description: 'Visual demonstration of frequency filtering on actual images' },
+        { src: `${basePath}/fig_progressive_filtering.png`, caption: 'Progressive Filtering Schedule', description: 'How retain fraction decreases over training epochs' },
+        { src: `${basePath}/fig_adaptive_schedules.png`, caption: 'Adaptive Scheduling Dynamics', description: 'Evolution of retain fraction and interleaving period' },
       ],
     },
     {
       title: 'Architecture & Performance Analysis',
       figures: [
-        { src: '/fig_architecture_comparison.png', caption: 'Architecture Comparison', description: 'Optimizer performance across different network architectures' },
-        { src: '/fig_computational_breakdown.png', caption: 'Computational Cost Breakdown', description: 'Time analysis showing 40% overhead for Falcon' },
-        { src: '/fig_mask_sharing.png', caption: 'Mask Sharing Strategy', description: 'How frequency masks are shared across parameter groups' },
-        { src: '/fig_ema_averaging.png', caption: 'EMA Averaging Effects', description: 'Impact of exponential moving average on convergence' },
-        { src: '/fig_robustness_noise.png', caption: 'Robustness to Noise', description: 'Performance under different noise conditions' },
+        { src: `${basePath}/fig_architecture_comparison.png`, caption: 'Architecture Comparison', description: 'Optimizer performance across different network architectures' },
+        { src: `${basePath}/fig_computational_breakdown.png`, caption: 'Computational Cost Breakdown', description: 'Time analysis showing 40% overhead for Falcon' },
+        { src: `${basePath}/fig_mask_sharing.png`, caption: 'Mask Sharing Strategy', description: 'How frequency masks are shared across parameter groups' },
+        { src: `${basePath}/fig_ema_averaging.png`, caption: 'EMA Averaging Effects', description: 'Impact of exponential moving average on convergence' },
+        { src: `${basePath}/fig_robustness_noise.png`, caption: 'Robustness to Noise', description: 'Performance under different noise conditions' },
       ],
     },
   ];
