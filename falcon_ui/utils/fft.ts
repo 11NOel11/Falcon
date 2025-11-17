@@ -164,15 +164,28 @@ export function ifft2D(input: Complex[][]): number[][] {
     row.map(c => ({ real: c.real, imag: -c.imag }))
   );
 
-  // Apply 2D FFT
-  const fftResult = fft2D(conjugated.map(row => row.map(c => c.real)));
+  // FFT along rows
+  const rowFFT: Complex[][] = conjugated.map(row => fft(row));
 
-  // Conjugate and scale
+  // Transpose
+  const transposed: Complex[][] = [];
+  for (let j = 0; j < cols; j++) {
+    transposed[j] = [];
+    for (let i = 0; i < rows; i++) {
+      transposed[j][i] = rowFFT[i][j];
+    }
+  }
+
+  // FFT along columns (which are now rows after transpose)
+  const colFFT = transposed.map(row => fft(row));
+
+  // Transpose back and conjugate/scale
   const result: number[][] = [];
   for (let i = 0; i < rows; i++) {
     result[i] = [];
     for (let j = 0; j < cols; j++) {
-      result[i][j] = fftResult[i][j].real / (rows * cols);
+      // Conjugate and scale
+      result[i][j] = colFFT[j][i].real / (rows * cols);
     }
   }
 

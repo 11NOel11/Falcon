@@ -123,7 +123,7 @@ export default function Home() {
                     }
                   />
                 </Link>
-                <Link href="/falcon_v5">
+                <Link href="/results">
                   <AnimatedCard
                     title="Experimental Results"
                     description="Complete analysis of CIFAR-10 experiments with all figures and metrics"

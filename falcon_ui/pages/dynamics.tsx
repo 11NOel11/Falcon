@@ -11,17 +11,16 @@ type MetricType = 'loss' | 'accuracy' | 'schedule';
 
 export default function DynamicsPage() {
   const [selectedMetric, setSelectedMetric] = useState<MetricType>('loss');
+  const [logScale, setLogScale] = useState(false);
   const [visibleOptimizers, setVisibleOptimizers] = useState({
     AdamW: true,
     Muon: true,
-    Scion: true,
     Falcon: true,
   });
 
   const optimizerColors = {
     AdamW: '#4FACF7',
     Muon: '#E87BF8',
-    Scion: '#9D4EDD',
     Falcon: '#00F5FF',
   };
 
@@ -113,6 +112,7 @@ export default function DynamicsPage() {
         title: 'Training Loss',
         gridcolor: '#2D3748',
         color: '#9CA3AF',
+        type: logScale ? 'log' : 'linear',
       };
     } else if (selectedMetric === 'accuracy') {
       baseLayout.yaxis = {
@@ -204,6 +204,23 @@ export default function DynamicsPage() {
                       />
                     ))}
                   </div>
+                </Card>
+              )}
+
+              {selectedMetric === 'loss' && (
+                <Card>
+                  <h3 className="text-xl font-bold mb-4 text-falcon-cyan">
+                    Scale Options
+                  </h3>
+                  <Toggle
+                    label="Logarithmic Scale"
+                    checked={logScale}
+                    onChange={setLogScale}
+                    color="#00F5FF"
+                  />
+                  <p className="text-xs text-gray-400 mt-2">
+                    Log scale makes differences more visible when values are close
+                  </p>
                 </Card>
               )}
 

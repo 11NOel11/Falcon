@@ -1,14 +1,12 @@
 import React from 'react';
 import Link from 'next/link';
 import WaveBackground from './WaveBackground';
-import ParticleField from './ParticleField';
 import RippleButton from './RippleButton';
 
 const Hero: React.FC = () => {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <WaveBackground />
-      <ParticleField />
 
       <div className="relative z-10 text-center px-6 max-w-5xl">
         <h1 className="text-6xl md:text-7xl font-display font-bold mb-6 text-white">
@@ -25,7 +23,7 @@ const Hero: React.FC = () => {
           <RippleButton href="/trajectory" variant="gradient">
             Explore Visualizations
           </RippleButton>
-          <RippleButton href="/falcon_v5" variant="secondary">
+          <RippleButton href="/results" variant="secondary">
             View Results
           </RippleButton>
         </div>

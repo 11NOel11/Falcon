@@ -18,7 +18,7 @@ const Navbar: React.FC = () => {
     { href: '/trajectory', label: 'Trajectory' },
     { href: '/filter', label: 'Filter' },
     { href: '/dynamics', label: 'Dynamics' },
-    { href: '/falcon_v5', label: 'Results' },
+    { href: '/results', label: 'Results' },
   ];
 
   return (
