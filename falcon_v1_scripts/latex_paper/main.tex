@@ -1,0 +1,87 @@
+% FALCON v5: Combined Research Paper
+% Frequency-Adaptive Learning with Conserved Orthogonality and Noise Filtering
+% Including Comprehensive Muon Optimizer Analysis
+
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+% Packages
+% \usepackage{cvpr}  % Commented out - use standard article class instead
+\usepackage[margin=1in]{geometry}  % Standard margins
+\usepackage{times}
+\usepackage{epsfig}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{subcaption}
+\usepackage{siunitx}
+\usepackage{pifont}
+
+% Hyperref setup
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue,
+}
+
+% Custom commands
+\newcommand{\ie}{\textit{i.e.}}
+\newcommand{\eg}{\textit{e.g.}}
+\newcommand{\etal}{\textit{et al.}}
+
+% Column separation without visible line
+\setlength{\columnsep}{0.3in}
+
+% Title and authors
+% \def\cvprPaperID{****} % Paper ID (commented out for standard article class)
+% \def\confYear{CVPR 2026}
+
+\begin{document}
+
+%%%%%%%%% TITLE
+\title{FALCON: Frequency-Adaptive Learning with Conserved Orthogonality and Noise Filtering \\
+\large{A Comprehensive Study with Muon Optimizer Analysis}}
+
+\author{Noel Thomas\\
+Mohamed bin Zayed University of Artificial Intelligence\\
+{\tt\small noel.thomas@mbzuai.ac.ae}
+}
+
+\maketitle
+
+%%%%%%%%% ABSTRACT
+\begin{abstract}
+We present FALCON, a hybrid optimizer integrating frequency-domain gradient filtering with orthogonal parameter updates for deep neural network training. Through comprehensive experiments on CIFAR-10 with VGG11, we evaluate FALCON against AdamW and Muon optimizers across full training, fixed-time budgets, and data-limited scenarios. FALCON achieves competitive accuracy (90.33\%) comparable to AdamW (90.28\%) and Muon (90.49\%), demonstrating frequency-domain optimization viability. However, it exhibits 40\% computational overhead and underperforms with limited data. We provide extensive ablation studies, convergence analysis, and detailed characterization of Muon's behavior, establishing that orthogonal updates offer marginal improvements (+0.21\%) at acceptable cost (+10\%). Code available at: \url{https://github.com/11NOel11/Falcon}
+\end{abstract}
+
+%%%%%%%%% BODY TEXT
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_method_falcon}
+\input{sections/04_method_muon}
+\input{sections/05_experimental_setup}
+\input{sections/06_results}
+\input{sections/07_analysis}
+\input{sections/08_ablation}
+\input{sections/09_conclusion}
+
+%%%%%%%%% ACKNOWLEDGMENTS
+{\small
+\section*{Acknowledgments}
+We thank the PyTorch team for their excellent framework, the CIFAR-10 dataset creators, and the Muon optimizer authors for open-sourcing their implementation.
+}
+
+%%%%%%%%% REFERENCES
+{\small
+\bibliographystyle{plain}
+\bibliography{references}
+}
+
+\end{document}

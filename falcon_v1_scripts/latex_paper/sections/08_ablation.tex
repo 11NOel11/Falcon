@@ -1,0 +1,181 @@
+\section{Ablation Studies}
+\label{sec:ablation}
+
+\subsection{FALCON Component Ablation}
+
+We ablate FALCON's features one at a time to understand individual contributions:
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{p{3.2cm}ccc}
+\toprule
+\textbf{Config} & \textbf{Acc} & \textbf{Time} & \textbf{$\Delta$Acc} \\
+\midrule
+\textbf{Full FALCON} & 90.33\% & 6.7s & --- \\
+- No EMA & 90.18\% & 6.6s & -0.15\% \\
+- No mask share & 89.95\% & 8.2s & -0.38\% \\
+- No adapt energy & 89.78\% & 6.5s & -0.55\% \\
+- No interleave & 90.21\% & 7.8s & -0.12\% \\
+- No freq WD & 90.29\% & 6.6s & -0.04\% \\
+- No Muon & 89.42\% & 5.1s & -0.91\% \\
+\bottomrule
+\end{tabular}
+\caption{FALCON component ablation. Muon integration most critical (-0.91\%), followed by adaptive energy (-0.55\%).}
+\label{tab:ablation_falcon}
+\end{table}
+
+\textbf{Key Findings:}
+\begin{enumerate}
+    \item \textbf{Muon Integration Most Critical:} Removing orthogonal updates costs -0.91\%, demonstrating hybrid optimization is essential
+    
+    \item \textbf{Adaptive Energy Important:} Per-layer tracking contributes +0.55\%, validating the schedule design
+    
+    \item \textbf{Mask Sharing Essential:} Without it, 22\% slower and -0.38\% accuracy. Computational efficiency crucial.
+    
+    \item \textbf{EMA Helps Stability:} +0.15\% improvement, relatively cheap to implement
+    
+    \item \textbf{Interleaved Schedule Improves Efficiency:} 16\% faster with minimal accuracy loss (-0.12\%)
+    
+    \item \textbf{Freq WD Minor:} Only +0.04\% contribution, could be removed to simplify
+\end{enumerate}
+
+\subsection{Hyperparameter Sensitivity}
+
+\subsubsection{Retain-Energy Schedule}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{ccc}
+\toprule
+\textbf{retain\_start $\rightarrow$ retain\_end} & \textbf{Val@1} & \textbf{Stability} \\
+\midrule
+0.99 $\rightarrow$ 0.70 & 89.87\% & Too conservative \\
+0.95 $\rightarrow$ 0.60 & 90.21\% & Good \\
+\textbf{0.95 $\rightarrow$ 0.50} & \textbf{90.33\%} & \textbf{Balanced} \\
+0.90 $\rightarrow$ 0.40 & 90.12\% & Some instability \\
+0.85 $\rightarrow$ 0.30 & 89.45\% & Unstable, oscillates \\
+\bottomrule
+\end{tabular}
+\caption{Effect of retain-energy schedule. 0.95$\rightarrow$0.50 optimal, balancing exploration (early) and exploitation (late).}
+\label{tab:retain_energy}
+\end{table}
+
+\subsubsection{Falcon-Every Interleaved Schedule}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{cccc}
+\toprule
+\textbf{Start $\rightarrow$ End} & \textbf{Val@1} & \textbf{Time/Epoch} & \textbf{Trade-off} \\
+\midrule
+1 $\rightarrow$ 1 (always) & 90.41\% & 7.8s & Best acc, slow \\
+2 $\rightarrow$ 1 & 90.38\% & 7.2s & Good balance \\
+\textbf{4 $\rightarrow$ 1} & \textbf{90.33\%} & \textbf{6.7s} & \textbf{Efficient} \\
+8 $\rightarrow$ 1 & 90.18\% & 6.3s & Too sparse \\
+Constant=4 & 89.92\% & 6.2s & Misses late filtering \\
+\bottomrule
+\end{tabular}
+\caption{Interleaved filtering schedule sensitivity. 4$\rightarrow$1 provides best speed/accuracy trade-off.}
+\label{tab:falcon_every}
+\end{table}
+
+\textbf{Insight:} Adaptive schedule (4$\rightarrow$1) balances exploration (early, sparse filtering) with exploitation (late, frequent filtering), achieving near-optimal accuracy at 14\% lower cost than always-filter.
+
+\subsubsection{Apply-Stages Selection}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccl}
+\toprule
+\textbf{Stages} & \textbf{Val@1} & \textbf{Time/Epoch} & \textbf{Note} \\
+\midrule
+All (1-5) & 89.74\% & 9.1s & Too aggressive \\
+Early (1-2) & 90.02\% & 7.4s & Large spatial size \\
+Mid (2-3) & 90.19\% & 6.9s & Good \\
+\textbf{Late (3-4)} & \textbf{90.33\%} & \textbf{6.7s} & \textbf{Optimal} \\
+Last only (5) & 90.11\% & 5.8s & Insufficient coverage \\
+\bottomrule
+\end{tabular}
+\caption{Apply-stages ablation. Filtering later stages (3-4) optimal---small spatial size reduces FFT cost while maintaining effectiveness.}
+\label{tab:apply_stages}
+\end{table}
+
+\textbf{Rationale:} Later stages have smaller spatial dimensions (8$\times$8, 16$\times$16) making FFT cheaper. Still captures important frequency structure. Early stages (32$\times$32) too expensive and disrupt low-level feature learning.
+
+\subsection{Muon Component Ablation}
+
+\subsubsection{LR Multiplier Sweep}
+
+Detailed in Section~\ref{sec:muon}, Table~\ref{tab:muon_lr}. Key finding: 1.25$\times$ optimal. Lower (1.0$\times$) too conservative (-0.82\%), higher (2.0$\times$) unstable (-1.47\%).
+
+\subsubsection{Hybrid vs Full Application}
+
+Detailed in Section~\ref{sec:muon}, Table~\ref{tab:muon_hybrid}. Key finding: Applying Muon to biases/BN hurts (-1.15\%). Selective application to 2D params crucial.
+
+\subsection{Batch Size Sensitivity}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+\textbf{Batch} & \textbf{AdamW} & \textbf{Muon} & \textbf{FALCON} \\
+\midrule
+128 & 89.45\% & 89.71\% & 89.58\% \\
+256 & 90.02\% & 90.19\% & 90.11\% \\
+\textbf{512} & \textbf{90.28\%} & \textbf{90.49\%} & \textbf{90.33\%} \\
+1024 & 90.11\% & 90.37\% & 90.24\% \\
+\bottomrule
+\end{tabular}
+\caption{Batch size sensitivity. Best=512.}
+\label{tab:batch_size}
+\end{table}
+
+\textbf{Observation:} Muon's +0.2\% advantage holds across batch sizes. FALCON consistently between Muon and AdamW. Optimal batch size=512 for RTX 6000 (balances throughput and gradient variance).
+
+\subsection{Learning Rate Robustness}
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{cccc}
+\toprule
+\textbf{LR} & \textbf{AdamW} & \textbf{Muon} & \textbf{FALCON} \\
+\midrule
+0.001 & 88.23\% & 88.45\% & 88.31\% \\
+0.003 & 89.54\% & 89.78\% & 89.62\% \\
+\textbf{0.01} & \textbf{90.28\%} & \textbf{90.49\%} & \textbf{90.33\%} \\
+0.03 & 89.76\% & 89.92\% & 89.81\% \\
+0.1 & 87.43\% & 88.01\% & 87.65\% \\
+\bottomrule
+\end{tabular}
+\caption{LR robustness. Peak=0.01. Muon more stable at 0.1.}
+\label{tab:lr_robustness}
+\end{table}
+
+\textbf{Key Finding:} Muon more robust to high learning rates (+0.58\% at LR=0.1), supporting claim that orthogonal updates provide stability. FALCON intermediate, benefiting from Muon integration.
+
+\subsection{Architecture Generalization (Preliminary)}
+
+While our main experiments use VGG11, we conducted preliminary tests on ResNet-18:
+
+\begin{table}[h]
+\centering
+\footnotesize
+\begin{tabular}{lccc}
+\toprule
+\textbf{Model} & \textbf{AdamW} & \textbf{Muon} & \textbf{FALCON} \\
+\midrule
+VGG11 & 90.28\% & 90.49\% & 90.33\% \\
+ResNet-18 & 94.12\% & 94.31\% & 94.18\% \\
+\bottomrule
+\end{tabular}
+\caption{Architecture generalization (preliminary).}
+\label{tab:resnet_prelim}
+\end{table}
+
+\textbf{Note:} ResNet results are preliminary (single run). Full characterization left for future work. Encouraging that relative ranking preserved.

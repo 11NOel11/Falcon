@@ -1,0 +1,140 @@
+{
+  "full_training": [
+    {
+      "experiment": "A1_full",
+      "optimizer": "AdamW",
+      "data_fraction": 1.0,
+      "best_val_acc": 90.28,
+      "best_epoch": 228,
+      "total_time_min": 5.0,
+      "median_epoch_time_s": 4.8,
+      "images_per_sec": 10382,
+      "time_to_85_percent": 1.27
+    },
+    {
+      "experiment": "M1_full",
+      "optimizer": "Muon",
+      "data_fraction": 1.0,
+      "best_val_acc": 90.49,
+      "best_epoch": 220,
+      "total_time_min": 5.37,
+      "median_epoch_time_s": 5.3,
+      "images_per_sec": 9418,
+      "time_to_85_percent": 1.18
+    },
+    {
+      "experiment": "F5_full",
+      "optimizer": "FALCON v5",
+      "data_fraction": 1.0,
+      "best_val_acc": 90.33,
+      "best_epoch": 236,
+      "total_time_min": 6.99,
+      "median_epoch_time_s": 6.7,
+      "images_per_sec": 7486,
+      "time_to_85_percent": 1.56
+    }
+  ],
+  "fixed_time": [
+    {
+      "experiment": "A1_t10",
+      "optimizer": "AdamW",
+      "data_fraction": 1.0,
+      "best_val_acc": 90.28,
+      "best_epoch": 228,
+      "total_time_min": 5.18,
+      "median_epoch_time_s": 5.0,
+      "images_per_sec": 10034,
+      "time_to_85_percent": 1.33
+    },
+    {
+      "experiment": "M1_t10",
+      "optimizer": "Muon",
+      "data_fraction": 1.0,
+      "best_val_acc": 90.49,
+      "best_epoch": 220,
+      "total_time_min": 5.9,
+      "median_epoch_time_s": 5.9,
+      "images_per_sec": 8508,
+      "time_to_85_percent": 1.2
+    },
+    {
+      "experiment": "F5_t10",
+      "optimizer": "FALCON v5",
+      "data_fraction": 1.0,
+      "best_val_acc": 87.77,
+      "best_epoch": 72,
+      "total_time_min": 2.44,
+      "median_epoch_time_s": 7.8,
+      "images_per_sec": 6383,
+      "time_to_85_percent": 1.35
+    }
+  ],
+  "data_efficiency": [
+    {
+      "experiment": "A1_20p",
+      "optimizer": "AdamW",
+      "data_fraction": 0.2,
+      "best_val_acc": 80.66,
+      "best_epoch": 56,
+      "total_time_min": 1.71,
+      "median_epoch_time_s": 1.6,
+      "images_per_sec": 6276,
+      "time_to_85_percent": null
+    },
+    {
+      "experiment": "M1_20p",
+      "optimizer": "Muon",
+      "data_fraction": 0.2,
+      "best_val_acc": 80.78,
+      "best_epoch": 49,
+      "total_time_min": 1.77,
+      "median_epoch_time_s": 1.7,
+      "images_per_sec": 5838,
+      "time_to_85_percent": null
+    },
+    {
+      "experiment": "F5_20p",
+      "optimizer": "FALCON v5",
+      "data_fraction": 0.2,
+      "best_val_acc": 79.89,
+      "best_epoch": 47,
+      "total_time_min": 2.34,
+      "median_epoch_time_s": 2.2,
+      "images_per_sec": 4585,
+      "time_to_85_percent": null
+    },
+    {
+      "experiment": "A1_10p",
+      "optimizer": "AdamW",
+      "data_fraction": 0.1,
+      "best_val_acc": 75.43,
+      "best_epoch": 99,
+      "total_time_min": 2.4,
+      "median_epoch_time_s": 1.3,
+      "images_per_sec": 3836,
+      "time_to_85_percent": null
+    },
+    {
+      "experiment": "M1_10p",
+      "optimizer": "Muon",
+      "data_fraction": 0.1,
+      "best_val_acc": 75.37,
+      "best_epoch": 86,
+      "total_time_min": 2.33,
+      "median_epoch_time_s": 1.4,
+      "images_per_sec": 3700,
+      "time_to_85_percent": null
+    },
+    {
+      "experiment": "F5_10p",
+      "optimizer": "FALCON v5",
+      "data_fraction": 0.1,
+      "best_val_acc": 74.4,
+      "best_epoch": 86,
+      "total_time_min": 2.94,
+      "median_epoch_time_s": 1.6,
+      "images_per_sec": 3064,
+      "time_to_85_percent": null
+    }
+  ]
+}

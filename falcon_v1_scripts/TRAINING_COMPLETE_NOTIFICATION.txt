@@ -1,0 +1,39 @@
+To: noel.thomas@mbzuai.ac.ae
+Subject: FALCON Training Suite Complete (7 experiments)
+
+All experiments completed!
+
+F5_t10:
+  Best Val@1: 87.77%
+  Time: 2.4 min
+
+A1_20p:
+  Best Val@1: 80.66%
+  Time: 1.7 min
+
+M1_20p:
+  Best Val@1: 80.78%
+  Time: 1.8 min
+
+F5_20p:
+  Best Val@1: 79.89%
+  Time: 2.3 min
+
+A1_10p:
+  Best Val@1: 75.43%
+  Time: 2.4 min
+
+M1_10p:
+  Best Val@1: 75.37%
+  Time: 2.3 min
+
+F5_10p:
+  Best Val@1: 74.40%
+  Time: 2.9 min
+
+
+Total monitoring time: 80.0 minutes
+
+Next steps:
+  python scripts/plot_results_v5.py
+  Check paper_assets/ for figures

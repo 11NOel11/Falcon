@@ -1,0 +1,194 @@
+\section{Analysis and Discussion}
+\label{sec:analysis}
+
+\subsection{Why Parity, Not Superiority?}
+
+\textbf{Question:} If FALCON has 6 advanced features, why doesn't it beat AdamW?
+
+\textbf{Answers:}
+
+\textbf{1. AdamW is Highly Optimized:} 10+ years of community refinement. Near-optimal for standard vision tasks. Difficult to improve upon without task-specific knowledge.
+
+\textbf{2. Architecture Mismatch:} VGG11 is relatively shallow (8 conv layers). Frequency filtering benefits may be more pronounced in:
+\begin{itemize}
+    \item Deeper networks (ResNets, EfficientNets)
+    \item Transformers where gradient flow is more complex
+    \item Very large models (GPT-scale) with chaotic loss landscapes
+\end{itemize}
+
+\textbf{3. Task Complexity:} CIFAR-10 is ``toy-scale.'' Real-world benefits may emerge on:
+\begin{itemize}
+    \item ImageNet (longer training, 90+ epochs)
+    \item High-resolution images (224$\times$224 or larger)
+    \item Domain-specific tasks (medical imaging, satellite imagery)
+\end{itemize}
+
+\textbf{4. Hyperparameter Tuning:} AdamW used with universal defaults ($\beta_1=0.9$, $\beta_2=0.999$). FALCON has 20+ hyperparameters---likely suboptimal choices for this specific task. Extensive grid search might improve results but at high computational cost.
+
+\subsection{Computational Overhead Analysis}
+
+\textbf{FFT Complexity:} O($HW \log(HW)$) per layer
+\begin{itemize}
+    \item For 32$\times$32: $\sim$3K operations
+    \item For 8$\times$8: $\sim$200 operations
+\end{itemize}
+
+\textbf{Cumulative Cost:} Filtering 4 conv layers (stages 3-4):
+\begin{itemize}
+    \item 2 layers @ 16$\times$16
+    \item 2 layers @ 8$\times$8
+    \item Total: $\sim$1.2K FFT ops per forward pass
+\end{itemize}
+
+\textbf{Why So Slow?}
+\begin{enumerate}
+    \item FFT kernel launch overhead (GPU synchronization)
+    \item Complex number arithmetic (2$\times$ memory bandwidth)
+    \item Mask computation and application
+    \item Rank-k approximation via power iteration
+\end{enumerate}
+
+\textbf{Potential Optimizations:}
+\begin{itemize}
+    \item Custom CUDA kernels for batched FFT
+    \item Precompute masks more aggressively (increase mask\_interval)
+    \item Approximate masks using closed-form patterns (Gaussian, etc.)
+    \item Profile and optimize power iteration (fewer steps, warm starts)
+    \item Use mixed precision (FP16) for FFT operations
+\end{itemize}
+
+\subsection{Data Efficiency Hypothesis Failure}
+
+\textbf{Original Reasoning:}
+\begin{itemize}
+    \item Low-frequency gradients $\rightarrow$ smooth updates $\rightarrow$ better generalization
+    \item High-frequency filtering $\rightarrow$ noise removal $\rightarrow$ implicit regularization
+    \item Expected FALCON to excel with 10-20\% data
+\end{itemize}
+
+\textbf{Why It Failed:}
+\begin{enumerate}
+    \item \textbf{Over-Regularization:} Removing high-freq may discard useful information early in training when exploration is critical
+    
+    \item \textbf{Reduced Expressiveness:} Filtered gradients may not explore parameter space effectively, missing important local minima
+    
+    \item \textbf{Small Data Regime:} With 5k-10k images, every gradient bit matters---aggressive filtering (50\% retention) removes signal along with noise
+    
+    \item \textbf{Semantic Loss:} Figure~\ref{fig:real_filtering} shows 50\% retention removes substantial visual information, not just noise
+\end{enumerate}
+
+\textbf{Lesson:} Spectral analysis intuitions from signal processing don't always transfer to deep learning. Gradient ``noise'' may contain exploration signals necessary for escaping poor local minima.
+
+\subsection{Muon's Success Factors}
+
+\textbf{Why does Muon achieve +0.21\% over AdamW?}
+
+\textbf{1. Orthogonal Updates Provide Stability:}
+\begin{itemize}
+    \item Norm preservation ($\|UV^T\| = 1$) ensures bounded steps
+    \item Prevents parameter space distortion
+    \item Reduces oscillation in loss landscape
+\end{itemize}
+
+\textbf{2. Implicit Second-Order Information:}
+\begin{itemize}
+    \item SVD captures gradient structure
+    \item Orthogonal direction aligned with principal components
+    \item Acts as approximate natural gradient
+\end{itemize}
+
+\textbf{3. Hybrid Design is Key:}
+\begin{itemize}
+    \item 97\% params use Muon (conv + FC)
+    \item 3\% use AdamW (bias + BN)
+    \item Selective application crucial (Table~\ref{tab:muon_hybrid})
+\end{itemize}
+
+\textbf{4. Convergence Speed:}
+\begin{itemize}
+    \item Reaches 85\% in 1.18min (7\% faster than AdamW)
+    \item Despite +10\% per-epoch cost, fewer epochs needed
+    \item Orthogonality provides efficient path through loss landscape
+\end{itemize}
+
+\subsection{When Might FALCON Excel?}
+
+Based on negative results, we hypothesize FALCON could shine in:
+
+\textbf{1. Very Deep Networks (ResNet-101+, ViT-L)}
+\begin{itemize}
+    \item Gradient flow issues more pronounced
+    \item Frequency filtering may stabilize training
+    \item FFT overhead proportionally smaller
+\end{itemize}
+
+\textbf{2. High-Resolution Images (ImageNet, Medical)}
+\begin{itemize}
+    \item Rich frequency structure to exploit
+    \item 224$\times$224 or larger spatial dimensions
+    \item FFT cost amortized over larger feature maps
+\end{itemize}
+
+\textbf{3. Noisy Label Settings}
+\begin{itemize}
+    \item Explicit noise in labels $\rightarrow$ high-freq gradients
+    \item Filtering could provide robustness
+    \item Analogous to label smoothing
+\end{itemize}
+
+\textbf{4. Long Training Runs (100+ epochs)}
+\begin{itemize}
+    \item Initial overhead amortized
+    \item Late-stage smoothing more beneficial
+    \item EMA weights converge to better solutions
+\end{itemize}
+
+\textbf{5. Custom Hardware (TPUs with Fast FFT)}
+\begin{itemize}
+    \item FFT operations hardware-accelerated
+    \item Overhead minimized
+    \item Could achieve near-AdamW speed
+\end{itemize}
+
+\subsection{Practical Recommendations}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{p{2.5cm}p{2cm}p{2cm}}
+\toprule
+\textbf{Scenario} & \textbf{Recommended} & \textbf{Reason} \\
+\midrule
+Quick prototyping & AdamW & Fastest, simplest \\
+\midrule
+Quality-critical & Muon & +0.2\% for +10\% time \\
+\midrule
+2D-heavy CNNs & Muon & 97\% params benefit \\
+\midrule
+Limited compute & AdamW & Best throughput \\
+\midrule
+Research/ablation & FALCON & Interesting ideas \\
+\midrule
+Production at scale & AdamW & Proven, fast \\
+\midrule
+Noisy data & Try Muon & Stability helps \\
+\bottomrule
+\end{tabular}
+\caption{Optimizer selection guide based on scenario.}
+\label{tab:recommendations}
+\end{table}
+
+\textbf{For Practitioners:}
+\begin{itemize}
+    \item \textbf{Default choice:} Stick with AdamW (fast, simple, effective)
+    \item \textbf{Seeking +0.2\%:} Try Muon (muon\_lr\_mult=1.25)
+    \item \textbf{Research exploration:} FALCON offers interesting ideas despite practical limitations
+\end{itemize}
+
+\textbf{For Researchers:}
+\begin{itemize}
+    \item Honest negative results are valuable
+    \item Frequency-domain optimization is viable but needs refinement
+    \item Hybrid designs (like Muon) show promise
+    \item Focus optimization on 2D parameters where it matters most
+\end{itemize}

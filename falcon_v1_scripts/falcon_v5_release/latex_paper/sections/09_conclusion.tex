@@ -1,0 +1,16 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented FALCON, a hybrid optimizer integrating frequency-domain gradient filtering with orthogonal parameter updates. Through comprehensive experiments on CIFAR-10 with VGG11, we evaluated FALCON against AdamW and Muon across full training, fixed-time budgets, and data-limited scenarios.
+
+FALCON achieves competitive accuracy (90.33\% vs AdamW 90.28\% vs Muon 90.49\%), validating frequency-domain optimization as theoretically sound. However, it exhibits 40\% computational overhead (6.7s vs 4.8s per epoch) and underperforms with limited data (0.8-1.0\% worse). Muon provides slight improvement (+0.21\%) with faster convergence (7\% quicker to 85\%) at acceptable cost (+10\% time).
+
+\textbf{Recommendations:} Use AdamW for speed-critical applications. Use Muon for 2D-heavy architectures when accuracy is paramount. Use FALCON for research exploration of frequency-domain methods or custom FFT hardware.
+
+\textbf{Limitations:} Single dataset/architecture, single seed, FALCON's overhead limits adoption, 20+ hyperparameters need tuning, Muon's +0.2\% may not scale.
+
+\textbf{Future Work:} Scale to ImageNet/Transformers, optimize FFT with CUDA kernels, multi-seed testing, learned frequency masks, hardware co-design, domain-specific tuning.
+
+\textbf{Key Lessons:} Hybrid designs work but computational efficiency is paramount. Signal processing intuitions require empirical validation---frequency filtering failed in low-data regime. AdamW's decade of refinement makes improvements difficult without fundamentally new approaches.
+
+Code: \url{https://github.com/11NOel11/Falcon}

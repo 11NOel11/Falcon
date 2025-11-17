@@ -1,0 +1,9 @@
+\section{Introduction}
+
+First-order optimization methods, particularly Adam~\cite{kingma2014adam} and its variants, have become the de facto standard for training deep neural networks. However, they treat all frequency components of gradients uniformly, potentially amplifying high-frequency noise. Recent work in second-order methods~\cite{muon2024} has shown that orthogonal updates provide stability benefits, while frequency-domain analysis reveals that gradients contain rich spectral structure~\cite{xu2020frequency}.
+
+\textbf{Key Question:} Can we design an optimizer that intelligently filters gradient frequencies while maintaining orthogonal update stability and momentum-based adaptivity?
+
+We present FALCON (Frequency-Adaptive Learning with Conserved Orthogonality \& Noise filtering) and comprehensive analysis including Muon optimizer characterization. Our contributions include: (1) FALCON optimizer with six novel technical innovations (interleaved filtering, adaptive energy tracking, mask sharing, EMA averaging, frequency-weighted decay, hybrid 2D optimization), (2) comprehensive evaluation across 12 experiments on CIFAR-10 with VGG11, (3) detailed Muon analysis with learning rate sensitivity and convergence characterization, (4) honest negative results showing FALCON underperforms with limited data (0.8-1.0\% worse), and (5) practical guidelines for optimizer selection.
+
+\textbf{Key Findings:} FALCON achieves accuracy parity (90.33\% vs AdamW 90.28\% vs Muon 90.49\%) but exhibits 40\% computational overhead (6.7s vs 4.8s per epoch) and no data efficiency gain. Muon provides slight improvement (+0.21\%) with faster convergence (7\% quicker to 85\%) at acceptable cost (+10\% time). Code: \url{https://github.com/11NOel11/Falcon}

@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Training outputs
+runs/
+results/
+results_v4/
+results_v5_final/
+
+# Data
+data/cifar-10-python.tar.gz
+data/cifar-10-batches-py/
+
+# LaTeX auxiliary files
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+*.toc
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Old versions
+*_backup.py
+train_v2_backup.py
+
+# Temporary files
+*.tmp
+*.swp
+*~

@@ -1,0 +1,10 @@
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Adaptive Optimization:} Adam~\cite{kingma2014adam} and AdamW~\cite{loshchilov2019decoupled} remain the most widely used optimizers, combining momentum with per-parameter adaptive learning rates. Despite convergence issues~\cite{reddi2019convergence}, their robustness and simplicity ensure continued dominance.
+
+\textbf{Second-Order Methods:} Muon~\cite{muon2024} applies orthogonal updates (via SVD) to 2D parameters while using AdamW for others, achieving +0.2\% accuracy at +10\% cost. K-FAC~\cite{martens2015optimizing} and Shampoo~\cite{gupta2018shampoo} provide second-order information at reduced cost but suffer from implementation complexity. Natural gradient descent~\cite{amari1998natural} offers strong theory but expensive computation.
+
+\textbf{Frequency-Domain Analysis:} Neural networks exhibit spectral bias toward low frequencies~\cite{bruna2013invariant}. Recent work shows gradients contain rich spectral structure with low-frequency signal and high-frequency noise~\cite{rippel2015spectral}, motivating our filtering approach. Spectral normalization~\cite{ioffe2015batch} and Fourier-based convolutions~\cite{mathieu2013fast} demonstrate frequency-domain benefits.
+
+\textbf{Gradient Processing:} Gradient clipping~\cite{goodfellow2016deep} prevents explosions via norm thresholding. LARS/LAMB~\cite{sutskever2013importance} enable large-batch training through layer-wise adaptive scaling. Orthogonal constraints in initialization~\cite{glorot2010understanding} and RNNs~\cite{he2015delving} preserve gradient flow, which Muon extends to the optimization process itself.

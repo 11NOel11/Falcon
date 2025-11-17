@@ -1,0 +1,9 @@
+# core
+torch
+torchvision
+torchaudio
+tqdm
+numpy
+matplotlib
+# optional (if you use Weights & Biases)
+wandb

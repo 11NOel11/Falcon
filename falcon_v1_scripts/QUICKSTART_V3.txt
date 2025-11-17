@@ -1,0 +1,110 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         FALCON v3 QUICK REFERENCE                            ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📁 KEY FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  optim/falcon.py              FALCON v3 optimizer (frequency-aware, low-rank)
+  train.py                     Training pipeline with all experiments
+  scripts/run_v3.sh            Run full experiment suite (13 experiments)
+  scripts/plot_results.py      Generate figures and summary table
+  scripts/cifar10c_helpers.py  Robustness testing utilities
+  README_v3.md                 Complete documentation
+  FALCON_V3_SUMMARY.md         Implementation summary
+
+🚀 QUICK START
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # Pilot test (3 epochs)
+  python train.py --optimizer falcon --epochs 3 --exp test_falcon
+
+  # Full training (60 epochs, default v3 settings)
+  python train.py --optimizer falcon --epochs 60 --exp F1_v3
+
+  # Run all experiments
+  ./scripts/run_v3.sh
+
+  # Generate plots
+  python scripts/plot_results.py
+
+⚙️ FALCON v3 DEFAULT SETTINGS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  --rank1-backend poweriter           # Fast low-rank approximation
+  --poweriter-steps 1                 # Single power iteration
+  --mask-interval 5                   # Recompute mask every 5 steps
+  --apply-stages "3,4"                # Target deep layers only
+  --skip-mix-start 0.0                # Start with raw gradients
+  --skip-mix-end 0.7                  # End with 70% filtered
+  --retain-energy-start 0.90          # Start with 90% energy
+  --retain-energy-end 0.60            # End with 60% energy
+  --rank-k 1                          # Rank-1 approximation
+  --late-rank-k-epoch 40              # Upgrade to rank-2 at epoch 40
+  --freq-wd-beta 0.0                  # No extra freq-domain decay
+  --min-kernel 3                      # Apply to 3×3 or larger kernels
+
+🎯 OPTIMIZER CHOICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  --optimizer adamw      # AdamW baseline
+  --optimizer muon       # Muon hybrid (if available)
+  --optimizer falcon     # FALCON v3 (default)
+  --optimizer scion      # Scion (if available, else AdamW)
+  --optimizer gluon      # Gluon (if available, else AdamW)
+
+📊 EXPERIMENT TYPES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Full Training:        --epochs 60
+  Robustness:           --test-highfreq-noise 0.15
+  Data Efficiency:      --dataset-fraction 0.2
+  Fixed-Time:           --time-budget-min 10
+
+🔍 DEBUG MODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  export FALCON_DEBUG=1
+  python train.py --optimizer falcon --epochs 3 --exp debug
+
+  Shows: % bins kept, retain_energy, skip_mix, overhead timing
+
+📈 EXPECTED RESULTS (VGG11/CIFAR-10)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Optimizer    Best Top-1   Time to 85%   Top-1 @10min   Robust (Δ)
+  ─────────────────────────────────────────────────────────────────────
+  AdamW        88-89%       ~15 min       ~75%           -8% pts
+  Muon 1.25x   89-90%       ~12 min       ~78%           -7% pts
+  FALCON v3    90-91%       ~10 min       ~80%           -6% pts
+
+🎨 OUTPUT FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  runs/{exp_name}/metrics.csv              Training logs
+  runs/{exp_name}/best.pt                  Best checkpoint
+  
+  results/fig_top1_vs_time.png             Convergence curves
+  results/fig_time_to_85.png               Time to 85% accuracy
+  results/fig_fixed_time_10min.png         10-minute comparison
+  results/fig_robustness_noise.png         Robustness under noise
+  results/fig_data_efficiency.png          Full vs 20% data
+  results/table_summary.csv                Comprehensive metrics
+
+💡 TIPS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  • Start with pilot test (3 epochs) to verify setup
+  • Use --fast-mask for faster training (slight accuracy trade-off)
+  • Increase --mask-interval to 10 to reduce overhead
+  • For Muon, try --muon-lr-mult 1.25 for best results
+  • Results directory auto-created when running plot script
+  • All experiments use same seed=0 for reproducibility
+
+⚠️ TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  CUDA OOM:              Reduce --batch-size to 64
+  Slow training:         Use --fast-mask or --mask-interval 10
+  Muon unavailable:      Falls back to AdamW automatically
+  Poor convergence:      Check LR schedule, try higher retain_energy
+
+🔗 MORE INFO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Full docs:     README_v3.md
+  Summary:       FALCON_V3_SUMMARY.md
+  Help:          python train.py --help
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                FALCON v3 - Ready for Optimizer Paper-Level Experiments       ║
+╚══════════════════════════════════════════════════════════════════════════════╝
