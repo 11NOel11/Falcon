@@ -9,11 +9,14 @@ interface OptimizerResult {
   loss: number[];
 }
 
+// Base path for GitHub Pages deployment
+const basePath = process.env.NODE_ENV === 'production' ? '/Falcon' : '';
+
 const IMAGE_EXAMPLES = [
   {
     id: 'airplane',
     label: 'Airplane',
-    imagePath: '/fig_real_image_filtering.png',
+    imagePath: `${basePath}/fig_real_image_filtering.png`,
     description: 'CIFAR-10 test image - Airplane class',
     optimizers: {
       AdamW: {
