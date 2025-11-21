@@ -16,14 +16,15 @@ const IMAGE_EXAMPLES = [
   {
     id: 'airplane',
     label: 'Airplane',
-    imagePath: `${basePath}/fig_real_image_filtering.png`,
-    imageStyle: {
-      objectFit: 'cover',
-      objectPosition: '0% 12%',
-      height: '120px',
-      width: '100%',
-    } as React.CSSProperties,
     description: 'CIFAR-10 test image - Airplane class',
+    // Map each epoch to its corresponding filtered image
+    epochImages: {
+      1: `${basePath}/airplane_epoch1.png`,   // Heavily filtered (Retain 50%)
+      5: `${basePath}/airplane_epoch5.png`,   // Medium filtered (Retain 75%)
+      10: `${basePath}/airplane_epoch10.png`, // Lightly filtered (Retain 95%)
+      20: `${basePath}/airplane_epoch20.png`, // Original (clear)
+      40: `${basePath}/airplane_epoch40.png`, // Original (clear)
+    },
     optimizers: {
       AdamW: {
         epochs: [1, 5, 10, 20, 40],
@@ -58,6 +59,8 @@ export default function ImageComparison() {
   };
 
   const epochs = selectedImage.optimizers.AdamW.epochs;
+  const currentEpoch = epochs[selectedEpoch];
+  const currentImagePath = selectedImage.epochImages[currentEpoch as keyof typeof selectedImage.epochImages];
 
   return (
     <div className="space-y-6">
@@ -93,22 +96,26 @@ export default function ImageComparison() {
               Model Learning Progress
             </h3>
             <div className="bg-black rounded-lg p-4 mb-4 relative">
-              {/* Image with blur effect that decreases as epochs progress */}
-              <div className="relative overflow-hidden rounded" style={{ height: '120px' }}>
+              {/* Actual filtered airplane images from FALCON frequency filtering */}
+              <div className="relative">
                 <img
-                  src={selectedImage.imagePath}
-                  alt={selectedImage.label}
-                  className="w-full rounded transition-all duration-500"
-                  style={{
-                    ...selectedImage.imageStyle,
-                    filter: `blur(${Math.max(0, 8 - selectedEpoch * 1.6)}px) brightness(${0.6 + selectedEpoch * 0.08})`,
-                    opacity: 0.5 + selectedEpoch * 0.1
-                  }}
+                  src={currentImagePath}
+                  alt={`${selectedImage.label} at epoch ${currentEpoch}`}
+                  className="w-full h-auto rounded transition-all duration-500"
                 />
                 {/* Epoch indicator overlay */}
                 <div className="absolute top-2 right-2 bg-black/80 px-3 py-1 rounded-lg border border-falcon-cyan/50">
                   <span className="text-xs text-falcon-cyan font-mono">
-                    Epoch {epochs[selectedEpoch]}
+                    Epoch {currentEpoch}
+                  </span>
+                </div>
+                {/* Filtering info */}
+                <div className="absolute bottom-2 left-2 right-2 bg-black/80 px-3 py-1 rounded-lg border border-falcon-blue/50">
+                  <span className="text-xs text-gray-300">
+                    {selectedEpoch === 0 && 'Heavy filtering (50% energy retained)'}
+                    {selectedEpoch === 1 && 'Medium filtering (75% energy retained)'}
+                    {selectedEpoch === 2 && 'Light filtering (95% energy retained)'}
+                    {selectedEpoch >= 3 && 'No filtering (original image)'}
                   </span>
                 </div>
               </div>
@@ -119,7 +126,7 @@ export default function ImageComparison() {
                 <span className="text-falcon-cyan font-bold">{selectedImage.label}</span>
               </div>
               <div className="text-xs text-gray-500 italic">
-                Image clarity increases as the model learns
+                Actual FALCON frequency filtering at different training stages
               </div>
             </div>
           </div>
