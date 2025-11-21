@@ -17,6 +17,12 @@ const IMAGE_EXAMPLES = [
     id: 'airplane',
     label: 'Airplane',
     imagePath: `${basePath}/fig_real_image_filtering.png`,
+    imageStyle: {
+      objectFit: 'cover',
+      objectPosition: '0% 12%',
+      height: '120px',
+      width: '100%',
+    } as React.CSSProperties,
     description: 'CIFAR-10 test image - Airplane class',
     optimizers: {
       AdamW: {
@@ -80,23 +86,41 @@ export default function ImageComparison() {
 
       {/* Image and Results */}
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Source Image */}
+        {/* Source Image - Shows learning progression */}
         <div className="lg:col-span-1">
           <div className="p-6 bg-falcon-card border border-falcon-pink/30 rounded-lg h-full">
-            <h3 className="text-lg font-bold text-falcon-pink mb-4">Input Image</h3>
-            <div className="bg-black rounded-lg p-4 mb-4">
-              <img
-                src={selectedImage.imagePath}
-                alt={selectedImage.label}
-                className="w-full h-auto rounded"
-              />
+            <h3 className="text-lg font-bold text-falcon-pink mb-4">
+              Model Learning Progress
+            </h3>
+            <div className="bg-black rounded-lg p-4 mb-4 relative">
+              {/* Image with blur effect that decreases as epochs progress */}
+              <div className="relative overflow-hidden rounded" style={{ height: '120px' }}>
+                <img
+                  src={selectedImage.imagePath}
+                  alt={selectedImage.label}
+                  className="w-full rounded transition-all duration-500"
+                  style={{
+                    ...selectedImage.imageStyle,
+                    filter: `blur(${Math.max(0, 8 - selectedEpoch * 1.6)}px) brightness(${0.6 + selectedEpoch * 0.08})`,
+                    opacity: 0.5 + selectedEpoch * 0.1
+                  }}
+                />
+                {/* Epoch indicator overlay */}
+                <div className="absolute top-2 right-2 bg-black/80 px-3 py-1 rounded-lg border border-falcon-cyan/50">
+                  <span className="text-xs text-falcon-cyan font-mono">
+                    Epoch {epochs[selectedEpoch]}
+                  </span>
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-400">True Label:</span>
                 <span className="text-falcon-cyan font-bold">{selectedImage.label}</span>
               </div>
-              <div className="text-xs text-gray-500 italic">{selectedImage.description}</div>
+              <div className="text-xs text-gray-500 italic">
+                Image clarity increases as the model learns
+              </div>
             </div>
           </div>
         </div>
