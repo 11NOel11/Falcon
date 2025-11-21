@@ -25,11 +25,11 @@ def load_airplane_sample():
         col_width = width // 7
 
         # Extract just the original airplane (row 0, column 0)
-        # But get the actual airplane part without text
-        left = int(col_width * 0.15)
-        top = int(row_height * 0.65)
-        right = int(col_width * 0.85)
-        bottom = int(row_height * 0.95)
+        # Zoom out and position - remove all text
+        left = int(col_width * 0.08)
+        top = int(row_height * 0.68)  # Move down more to skip title
+        right = int(col_width * 0.92)
+        bottom = int(row_height * 0.96)
 
         airplane = img.crop((left, top, right, bottom))
         return np.array(airplane.convert('RGB'))
@@ -107,8 +107,8 @@ def create_airplane_epoch_images():
         (1, 0.50, 'airplane_epoch1.png'),   # Epoch 1: Heavy filtering
         (5, 0.75, 'airplane_epoch5.png'),   # Epoch 5: Medium filtering
         (10, 0.95, 'airplane_epoch10.png'), # Epoch 10: Light filtering
-        (20, 1.00, 'airplane_epoch20.png'), # Epoch 20: Original
-        (40, 1.00, 'airplane_epoch40.png'), # Epoch 40: Original
+        (20, 0.98, 'airplane_epoch20.png'), # Epoch 20: Nearly original (98%)
+        (40, 1.00, 'airplane_epoch40.png'), # Epoch 40: Fully converged (100%)
     ]
 
     output_dir = Path('../public')
@@ -124,8 +124,8 @@ def create_airplane_epoch_images():
             # Apply filtering
             filtered = apply_frequency_filter(airplane, retain_energy=retain)
 
-        # Create figure with just the image, no axes or labels
-        fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
+        # Create figure with rectangular aspect ratio to fit better
+        fig, ax = plt.subplots(figsize=(8, 5), dpi=100)
         ax.imshow(filtered)
         ax.axis('off')
 
@@ -140,7 +140,7 @@ def create_airplane_epoch_images():
         print(f"✓ Saved: {output_path}")
 
     # Also save the original
-    fig, ax = plt.subplots(figsize=(6, 6), dpi=100)
+    fig, ax = plt.subplots(figsize=(8, 5), dpi=100)
     ax.imshow(airplane)
     ax.axis('off')
     plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
@@ -154,8 +154,8 @@ def create_airplane_epoch_images():
     print("  Epoch 1  -> 50% energy retained (heavily filtered)")
     print("  Epoch 5  -> 75% energy retained (medium filtering)")
     print("  Epoch 10 -> 95% energy retained (light filtering)")
-    print("  Epoch 20 -> 100% original (no filtering)")
-    print("  Epoch 40 -> 100% original (no filtering)")
+    print("  Epoch 20 -> 98% energy retained (nearly converged)")
+    print("  Epoch 40 -> 100% original (fully converged)")
 
 if __name__ == '__main__':
     print("=" * 70)
