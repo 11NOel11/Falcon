@@ -47,10 +47,25 @@ def extract_airplane_epochs():
         # Crop the region
         cropped = img.crop((left, upper, right, lower))
 
+        # Manually crop to remove title/label whitespace
+        # The actual image content is in the lower portion
+        cell_height = cropped.height
+        cell_width = cropped.width
+
+        # Remove ~72% from top (title/whitespace) and keep bottom 20%
+        # Just want the actual airplane image, no text
+        content_top = int(cell_height * 0.72)
+        content_bottom = int(cell_height * 0.98)
+        # Add small horizontal margin
+        content_left = int(cell_width * 0.05)
+        content_right = int(cell_width * 0.95)
+
+        cropped = cropped.crop((content_left, content_top, content_right, content_bottom))
+
         # Save
         output_path = f'../public/{filename}'
         cropped.save(output_path)
-        print(f"✓ Saved epoch {epoch}: {output_path} (from column {col_idx})")
+        print(f"✓ Saved epoch {epoch}: {output_path} (from column {col_idx}) - size: {cropped.size}")
 
     # Also save just the original airplane for reference
     left = 0
@@ -58,8 +73,18 @@ def extract_airplane_epochs():
     right = col_width
     lower = airplane_row_y + row_height
     original = img.crop((left, upper, right, lower))
+
+    # Apply same cropping
+    cell_height = original.height
+    cell_width = original.width
+    content_top = int(cell_height * 0.72)
+    content_bottom = int(cell_height * 0.98)
+    content_left = int(cell_width * 0.05)
+    content_right = int(cell_width * 0.95)
+    original = original.crop((content_left, content_top, content_right, content_bottom))
+
     original.save('../public/airplane_original.png')
-    print(f"✓ Saved original airplane: ../public/airplane_original.png")
+    print(f"✓ Saved original airplane: ../public/airplane_original.png - size: {original.size}")
 
     print("\n✅ All airplane epoch images extracted successfully!")
     print("\nMapping:")
