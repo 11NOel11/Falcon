@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Link from 'next/link';
 
 interface RippleButtonProps {
   children: React.ReactNode;
@@ -65,9 +66,9 @@ const RippleButton: React.FC<RippleButtonProps> = ({
 
   if (href) {
     return (
-      <a href={href} className={baseClasses} onClick={handleClick}>
+      <Link href={href} className={baseClasses} onClick={handleClick}>
         {content}
-      </a>
+      </Link>
     );
   }
 
